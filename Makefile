@@ -5,7 +5,7 @@ DUDE = avrdude
 
 # If you are not using atmega328p and the USBtiny programmer, 
 # update the lines below to match your configuration
-CFLAGS = -Wall -Os -Iusbdrv -mmcu=atmega328p
+CFLAGS = -std=c11 -Wall -Os -Iusbdrv -mmcu=atmega328p
 OBJFLAGS = -j .text -j .data -O ihex
 DUDEFLAGS = -p atmega328p -c usbtiny -v
 
@@ -23,8 +23,8 @@ flash: main.hex
 	$(DUDE) $(DUDEFLAGS) -U flash:w:$<
 
 # One-liner to compile the command-line client from usbtest.c
-$(CMDLINE): usbtest.c
-	gcc -I ./libusb/include -O -Wall usbtest.c ./libusb/lib/dynamic/libusb_dyn.c -o usbtest.exe
+$(CMDLINE): usbtest.cpp
+	g++ -std=c++1y -I ./libusb/include -O -Wall usbtest.cpp ./libusb/lib/dynamic/libusb_dyn.c -o usbtest.exe
 
 # Housekeeping if you want it
 clean:

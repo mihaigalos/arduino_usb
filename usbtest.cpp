@@ -12,6 +12,12 @@
 // this is libusb, see http://libusb.sourceforge.net/ 
 #include <usb.h>
 
+#include  <ctime>
+#include <iostream>
+#include <iomanip>
+#include <chrono>
+#include <ctime>
+
 // same as in main.c
 #define USB_LED_OFF 0
 #define USB_LED_ON  1
@@ -124,7 +130,7 @@ static usb_dev_handle * usbOpenDevice(int vendor, char *vendorName, int product,
 int main(int argc, char **argv) {
 	usb_dev_handle *handle = NULL;
 	int nBytes = 0;
-	char buffer[256];
+	char buffer[255];
 
 	if (argc < 2) {
 		printf("Usage:\n");
@@ -135,7 +141,7 @@ int main(int argc, char **argv) {
 		printf("usbtext.exe in <string>\n");
 		exit(1);
 	}
-
+	auto start = std::chrono::high_resolution_clock::now();
 	handle = usbOpenDevice(0x16C0, "Galos Industries", 0x05DC, "DotPhat");
 
 	if (handle == NULL) {
@@ -152,10 +158,24 @@ int main(int argc, char **argv) {
 				USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_ENDPOINT_IN,
 				USB_LED_OFF, 0, 0, (char *) buffer, sizeof(buffer), 5000);
 	} else if (strcmp(argv[1], "out") == 0) {
+
 		nBytes = usb_control_msg(handle,
 				USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_ENDPOINT_IN,
 				USB_DATA_OUT, 0, 0, (char *) buffer, sizeof(buffer), 5000);
-		printf("Got %d bytes: %s\n", nBytes, buffer);
+//		printf("Got %d bytes: %s\n", nBytes, buffer);
+		std::cout << "Got " << nBytes << " bytes: " << std::endl;
+		for (int i = 0; i < nBytes; ++i) {
+			if (i > 0 && 0 == i % 8)
+				std::cout << std::endl;
+			auto value = static_cast<uint16_t>(static_cast<uint8_t>(buffer[i]));
+			std::cout << std::hex << " ";
+			if (value < 16)
+				std::cout << "0";
+			std::cout << value;
+
+		}
+
+		std::cout << std::dec << std::endl;
 	} else if (strcmp(argv[1], "write") == 0) {
 		nBytes = usb_control_msg(handle,
 				USB_TYPE_VENDOR | USB_RECIP_DEVICE | USB_ENDPOINT_IN,
@@ -171,6 +191,11 @@ int main(int argc, char **argv) {
 		fprintf(stderr, "USB error: %s\n", usb_strerror());
 
 	usb_close(handle);
+
+	auto elapsed = std::chrono::high_resolution_clock::now() - start;
+	long long microseconds = std::chrono::duration_cast
+			< std::chrono::milliseconds > (elapsed).count();
+	std::cout << "CPU time used: " << microseconds << " ms\n";
 
 	return 0;
 }

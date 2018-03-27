@@ -14,14 +14,30 @@
 #define F_CPU 16000000L
 #include <util/delay.h>
 
+#include <stdint.h>
+
 #define USB_LED_OFF 0
 #define USB_LED_ON  1
 #define USB_DATA_OUT 2
 #define USB_DATA_WRITE 3
 #define USB_DATA_IN 4
 
-static uchar replyBuf[16] = "Hello, USB!";
+#define columnCount 31
+#define bytesPercolumn 8
+
+static uchar replyBuf[columnCount * bytesPercolumn] = "Hello, USB!";
 static uchar dataReceived = 0, dataLength = 0; // for USB_DATA_IN
+
+static uint16_t offset = 0;
+
+void fillBufferFromFlash() {
+
+	for (uint16_t i = 0; i < sizeof(replyBuf); ++i) {
+		replyBuf[i] = pgm_read_byte_near(i + offset);
+	}
+	offset += sizeof(replyBuf);
+
+}
 
 // this gets called when custom control message is received
 USB_PUBLIC uchar usbFunctionSetup(uchar data[8]) {
@@ -35,6 +51,7 @@ USB_PUBLIC uchar usbFunctionSetup(uchar data[8]) {
 		PORTD |= (1 << 0) | (1 << 1); // turn LED off
 		return 0;
 	case USB_DATA_OUT: // send data to PC
+		fillBufferFromFlash();
 		usbMsgPtr = replyBuf;
 		return sizeof(replyBuf);
 	case USB_DATA_WRITE: // modify reply buffer
@@ -73,7 +90,7 @@ int main() {
 
 	DDRD = (1 << 1 | 1 << 0); // PB0 as output
 
-	//wdt_enable (WDTO_1S); // enable 1s watchdog timer
+//wdt_enable (WDTO_1S); // enable 1s watchdog timer
 
 	usbInit();
 
