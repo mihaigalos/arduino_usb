@@ -1,4 +1,4 @@
-This repository is deprecated. Development is continued in [arduino_cli](https://github.com/mihaigalos/arduino_cli).
+This repository is deprecated. Development is continued in https://github.com/mihaigalos/arduino_cli.
 
 
 This is the source code package for AVR ATtiny USB Tutorial by Joonas Pihlajamaa, published at Code and Life blog, http://codeandlife.com:
